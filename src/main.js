@@ -1,52 +1,48 @@
-import iziToast from 'izitoast'; // Імпорт бібліотеки для сповіщень
+// Імпорт функції для запиту до API з файлу pixabay-api.js
+import { getGalleryData } from './js/pixabay-api';
+
+// Імпорт функцій для роботи з інтерфейсом з файлу render-functions.js
+import { addLoader, removeLoader, markup } from './js/render-functions';
+
+// Імпорт бібліотеки iziToast для сповіщень
+import iziToast from 'izitoast'; 
 import 'izitoast/dist/css/iziToast.min.css'; // Імпорт стилів для iziToast
 
-import SimpleLightbox from "simplelightbox"; // Імпорт бібліотеки для лайтбоксу
-import "simplelightbox/dist/simple-lightbox.min.css"; // Імпорт стилів
+// Імпорт бібліотеки SimpleLightbox для лайтбоксу
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css'; // Імпорт стилів для SimpleLightbox
 
-// Отримуємо форму
+// Отримуємо форму пошуку за допомогою querySelector
 const form = document.querySelector('.search-form');
 
-// Отримуємо галерею
+// Отримуємо контейнер для галереї
 const gallery = document.querySelector('.gallery');
 
-// Ініціалізація SimpleLightbox
+// Ініціалізуємо SimpleLightbox для галереї
 let lightbox = new SimpleLightbox('.gallery a', {
-  captionsData: 'alt',
-  captionDelay: 250,
+  captionsData: 'alt', // Використовуємо атрибут alt як підпис до зображень
+  captionDelay: 250,   // Затримка перед показом підпису
 });
 
 // Додаємо обробник події submit до форми
 form.addEventListener('submit', onSubmitForm);
 
+// Функція обробки події submit на формі
 function onSubmitForm(event) {
-  // Зупиняємо стандартну поведінку форми
+  // Зупиняємо стандартну поведінку форми (перезавантаження сторінки)
   event.preventDefault();
 
-  // Створюємо об'єкт FormData для зчитування даних форми
+  // Створюємо об'єкт FormData для отримання даних з форми
   const formData = new FormData(event.target);
 
-  // Отримуємо значення поля input
+  // Преобразовуємо FormData у звичайний об'єкт і отримуємо поле пошуку
   const { search } = Object.fromEntries(formData.entries());
 
-  // Обрізаємо пробіли навколо введеного значення
+  // Обрізаємо зайві пробіли на початку та в кінці введеного значення
   const searchValue = search.trim();
 
-  // Викликаємо функцію для отримання даних з API, передаючи пошуковий запит
-  getGalleryData(searchValue);
-}
-
-const options = {
-  method: 'GET', // Метод запиту
-};
-
-const API_KEY = '45713433-433c1b648e48abad27090f3cc'; // Ключ для доступу до API Pixabay
-const API_URL = 'https://pixabay.com/api/?'; // Базовий URL для запитів
-
-// Функція для отримання даних з API
-function getGalleryData(queryValue) {
-  if (!queryValue) {
-    // Перевірка: якщо поле пошуку порожнє, виводимо помилку і припиняємо виконання
+  // Якщо значення пошуку порожнє, показуємо помилку і виходимо з функції
+  if (!searchValue) {
     iziToast.error({
       title: 'Error',
       message: 'The search query is empty.',
@@ -55,32 +51,17 @@ function getGalleryData(queryValue) {
     return;
   }
 
-  // Додаємо лоадер перед елементом галереї
-  addLoader();
+  // Додаємо анімацію лоадера до інтерфейсу
+  addLoader(gallery);
 
-  // Створюємо параметри запиту
-  const searchParams = new URLSearchParams({
-    key: API_KEY,
-    q: queryValue, // Пошуковий запит
-    image_type: 'photo', // Тип зображення
-    orientation: 'horizontal', // Орієнтація зображення
-    safesearch: true, // Включаємо безпечний пошук
-  });
+  // Викликаємо функцію для отримання зображень за пошуковим запитом
+  getGalleryData(searchValue)
+    .then(data => {
+      // Очищаємо галерею перед додаванням нових елементів
+      gallery.innerHTML = '';
 
-  // Виконуємо запит до API
-  fetch(`${API_URL}${searchParams}`, options)
-    .then((response) => {
-      if (!response.ok) {
-        // Якщо відповідь не успішна, кидаємо помилку з кодом статусу
-        throw new Error(response.status);
-      }
-      return response.json(); // Перетворюємо відповідь в JSON-формат
-    })
-    .then((data) => {
-      gallery.innerHTML = ''; // Очищуємо галерею перед додаванням нових елементів
-
+      // Якщо за запитом не знайдено зображень, показуємо відповідне сповіщення
       if (data.hits.length === 0) {
-        // Якщо немає зображень за запитом, виводимо сповіщення
         iziToast.info({
           position: 'topRight',
           title: 'Info',
@@ -89,17 +70,17 @@ function getGalleryData(queryValue) {
         return;
       }
 
-      // Викликаємо функцію для створення розмітки галереї
+      // Створюємо HTML-розмітку для галереї на основі отриманих даних
       const galleryMarkup = markup(data);
 
-      // Додаємо створену розмітку в галерею
+      // Додаємо створену розмітку до контейнера галереї
       gallery.insertAdjacentHTML('beforeend', galleryMarkup);
 
       // Оновлюємо SimpleLightbox після додавання нових елементів
       lightbox.refresh();
     })
-    .catch((error) => {
-      // Виводимо помилку у разі невдалого запиту
+    .catch(error => {
+      // Якщо виникла помилка, показуємо сповіщення з описом помилки
       console.error('Помилка:', error);
       iziToast.error({
         title: 'Error',
@@ -111,57 +92,4 @@ function getGalleryData(queryValue) {
       // Видаляємо лоадер після завершення запиту
       removeLoader();
     });
-}
-
-// Функція для додавання лоадера
-function addLoader() {
-  // Створюємо розмітку лоадера
-  const loaderHTML = '<span class="loader"></span>';
-
-  // Вставляємо лоадер перед галереєю
-  gallery.insertAdjacentHTML('beforebegin', loaderHTML);
-}
-
-// Функція для видалення лоадера
-function removeLoader() {
-  const loader = document.querySelector('.loader'); // Знаходимо лоадер
-  if (loader) {
-    loader.remove(); // Видаляємо лоадер з DOM
-  }
-}
-
-// Функція для створення розмітки галереї на основі отриманих даних
-function markup(data) {
-  // Використовуємо map для створення HTML-розмітки для кожного зображення
-  const markup = data.hits
-    .map(
-      ({
-        webformatURL, // URL зображення для відображення в галереї
-        largeImageURL, // Великий формат зображення для лайтбоксу
-        tags, // Теги зображення
-        likes, // Кількість лайків
-        views, // Кількість переглядів
-        comments, // Кількість коментарів
-        downloads, // Кількість завантажень
-      }) => `
-            <li class="gallery-item hvr-grow">
-              <a class="gallery-link" href="${largeImageURL}">
-                <img
-                  class="gallery-image"
-                  src="${webformatURL}"
-                  alt="${tags}"
-                  loading="lazy"
-              /></a>
-              <ul class="img-content-wrapper">
-                <li class="img-content-descr">Likes<span>${likes}</span></li>
-                <li class="img-content-descr">Views<span>${views}</span></li>
-                <li class="img-content-descr">Comments<span>${comments}</span></li>
-                <li class="img-content-descr">Downloads<span>${downloads}</span></li>
-              </ul>
-            </li>
-		`
-    )
-    .join(''); // Перетворюємо масив у рядок HTML
-
-  return markup; // Повертаємо створену розмітку
 }
