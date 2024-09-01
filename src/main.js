@@ -1,3 +1,6 @@
+// Імпорт бібліотеки axios для запитів на сервер
+import axios from "axios";
+
 // Імпорт функції для запиту до API з файлу pixabay-api.js
 import { getGalleryData } from './js/pixabay-api';
 
