@@ -1,27 +1,27 @@
-// Імпорт функції для запиту до API з файлу pixabay-api.js
+// Імпорт функції для запиту до API
 import { getGalleryData } from './js/pixabay-api';
 
-// Імпорт функцій для роботи з інтерфейсом з файлу render-functions.js
+// Імпорт функцій для роботи з інтерфейсом
 import { addLoader, removeLoader, markup } from './js/render-functions';
 
-// Імпорт бібліотеки iziToast для сповіщень користувача
+// Імпорт бібліотеки iziToast
 import iziToast from 'izitoast'; 
-import 'izitoast/dist/css/iziToast.min.css'; // Імпорт стилів для iziToast
+import 'izitoast/dist/css/iziToast.min.css';
 
-// Імпорт бібліотеки SimpleLightbox для показу зображень у форматі лайтбоксу
+// Імпорт бібліотеки SimpleLightbox для показу зображень
 import SimpleLightbox from 'simplelightbox';
-import 'simplelightbox/dist/simple-lightbox.min.css'; // Імпорт стилів для SimpleLightbox
+import 'simplelightbox/dist/simple-lightbox.min.css';
 
-// Отримуємо елемент форми пошуку за допомогою querySelector
+// Отримуємо елемент форми пошуку
 const form = document.querySelector('.search-form');
 
-// Отримуємо контейнер для галереї, куди будуть додаватися зображення
+// Отримуємо контейнер для галереї
 const gallery = document.querySelector('.gallery');
 
 // Отримуємо кнопку для завантаження додаткових зображень
 const loadMoreBtn = document.querySelector('.load-more-button');
 
-// Ініціалізуємо SimpleLightbox для перегляду зображень у лайтбоксі
+// Ініціалізуємо SimpleLightbox
 let lightbox = new SimpleLightbox('.gallery a', {
   captionsData: 'alt', // Використовуємо атрибут alt для підписів
   captionDelay: 250,   // Затримка перед показом підпису
@@ -30,6 +30,7 @@ let lightbox = new SimpleLightbox('.gallery a', {
 let searchValue = '';  // Змінна для зберігання пошукового запиту
 let page = 1;          // Поточна сторінка для пагінації
 let totalHits = 0;     // Загальна кількість результатів з API
+let shouldSmoothScroll = false; // Прапорець для контролю плавної прокрутки
 
 // Спочатку ховаємо кнопку завантаження додаткових зображень
 loadMoreBtn.style.display = 'none';  
@@ -106,8 +107,6 @@ function fetchGalleryData() {
         loadMoreBtn.style.display = 'block';  // Показуємо кнопку "Load more"
       }
 
-      // Викликаємо функцію плавної прокрутки
-      smoothScroll();
     })
     .catch(error => {
       console.error('Помилка:', error); // Виводимо помилку у консоль
@@ -119,6 +118,10 @@ function fetchGalleryData() {
     })
     .finally(() => {
       removeLoader(); // Видаляємо лоадер після завершення завантаження
+      if (shouldSmoothScroll) {
+        smoothScroll(); // Додаємо плавну прокрутку після завершення завантаження
+        shouldSmoothScroll = false; // Скидаємо прапорець після прокрутки
+      }
     });
 }
 
@@ -129,6 +132,9 @@ function onLoadMore() {
   // Ховаємо кнопку і показуємо лоадер під кнопкою
   loadMoreBtn.style.display = 'none';
   addLoader(loadMoreBtn);
+
+  // Встановлюємо прапорець для плавної прокрутки
+  shouldSmoothScroll = true;
 
   // Викликаємо функцію для отримання наступної порції зображень
   fetchGalleryData();
@@ -144,9 +150,9 @@ function smoothScroll() {
     // Отримуємо висоту однієї карточки галереї
     const cardHeight = firstGalleryItem.getBoundingClientRect().height;
 
-    // Прокручуємо сторінку на дві висоти карточки
+    // Прокручуємо сторінку
     window.scrollBy({
-      top: cardHeight * 5,
+      top: cardHeight * 2,
       behavior: 'smooth',
     });
   }
