@@ -1,10 +1,10 @@
 // Функція для додавання лоадера на інтерфейс
-export function addLoader(gallery) {
+export function addLoader(element) {
   // Створюємо HTML для лоадера
   const loaderHTML = '<span class="loader"></span>';
   
-  // Вставляємо лоадер перед галереєю
-  gallery.insertAdjacentHTML('beforebegin', loaderHTML);
+  // Вставляємо лоадер під вказаний елемент (під інпут або кнопку)
+  element.insertAdjacentHTML('afterend', loaderHTML);
 }
 
 // Функція для видалення лоадера з інтерфейсу
