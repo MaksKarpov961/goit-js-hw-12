@@ -73,56 +73,54 @@ function onSubmitForm(event) {
 }
 
 // Функція для запиту до API та відображення результатів
-function fetchGalleryData() {
-  getGalleryData(searchValue, page) // Викликаємо функцію з параметрами пошуку
-    .then(data => {
-      totalHits = data.totalHits; // Отримуємо загальну кількість результатів
+async function fetchGalleryData() {
+  try {
+    const data = await getGalleryData(searchValue, page); // Отримуємо дані з API
+    totalHits = data.totalHits; // Отримуємо загальну кількість результатів
 
-      // Якщо результатів немає, показуємо інформаційне повідомлення
-      if (data.hits.length === 0) {
-        iziToast.info({
-          position: 'topRight',
-          title: 'Info',
-          message: 'Sorry, there are no images matching your search query. Please try again!',
-        });
-        return;
-      }
+    // Якщо результатів немає, показуємо інформаційне повідомлення
+    if (data.hits.length === 0) {
+      iziToast.info({
+        position: 'topRight',
+        title: 'Info',
+        message: 'Sorry, there are no images matching your search query. Please try again!',
+      });
+      return;
+    }
 
-      // Генеруємо розмітку для галереї та додаємо її до контейнера
-      const galleryMarkup = markup(data);
-      gallery.insertAdjacentHTML('beforeend', galleryMarkup);
+    // Генеруємо розмітку для галереї та додаємо її до контейнера
+    const galleryMarkup = markup(data);
+    gallery.insertAdjacentHTML('beforeend', galleryMarkup);
 
-      // Оновлюємо лайтбокс для нових зображень
-      lightbox.refresh();
+    // Оновлюємо лайтбокс для нових зображень
+    lightbox.refresh();
 
-      // Якщо користувач досяг кінця результатів
-      if (page * 15 >= totalHits) {
-        iziToast.info({
-          title: 'Info',
-          message: "We're sorry, but you've reached the end of search results.",
-          position: 'topRight',
-        });
-        loadMoreBtn.style.display = 'none'; // Ховаємо кнопку
-      } else {
-        loadMoreBtn.style.display = 'block';  // Показуємо кнопку "Load more"
-      }
-
-    })
-    .catch(error => {
-      console.error('Помилка:', error); // Виводимо помилку у консоль
-      iziToast.error({
-        title: 'Error',
-        message: `Error: ${error.message}`,
+    // Якщо користувач досяг кінця результатів
+    if (page * 15 >= totalHits) {
+      iziToast.info({
+        title: 'Info',
+        message: "We're sorry, but you've reached the end of search results.",
         position: 'topRight',
       });
-    })
-    .finally(() => {
-      removeLoader(); // Видаляємо лоадер після завершення завантаження
-      if (shouldSmoothScroll) {
-        smoothScroll(); // Додаємо плавну прокрутку після завершення завантаження
-        shouldSmoothScroll = false; // Скидаємо прапорець після прокрутки
-      }
+      loadMoreBtn.style.display = 'none'; // Ховаємо кнопку
+    } else {
+      loadMoreBtn.style.display = 'block';  // Показуємо кнопку "Load more"
+    }
+
+  } catch (error) {
+    console.error('Помилка:', error); // Виводимо помилку у консоль
+    iziToast.error({
+      title: 'Error',
+      message: `Error: ${error.message}`,
+      position: 'topRight',
     });
+  } finally {
+    removeLoader(); // Видаляємо лоадер після завершення завантаження
+    if (shouldSmoothScroll) {
+      smoothScroll(); // Додаємо плавну прокрутку після завершення завантаження
+      shouldSmoothScroll = false; // Скидаємо прапорець після прокрутки
+    }
+  }
 }
 
 // Функція для завантаження додаткових зображень при натисканні на кнопку "Load more"
